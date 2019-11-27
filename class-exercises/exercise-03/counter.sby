@@ -1,0 +1,16 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+# abc pdr
+# abc pdr
+# aiger avy
+# aiger suprove
+
+[script]
+read -formal counter.v
+prep -top counter
+
+[files]
+counter.v

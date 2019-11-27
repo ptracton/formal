@@ -1,13 +1,22 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Filename: 	counter.v
+// Filename: 	busyctr.v
 //
 // Project:	A set of Yosys Formal Verification exercises
 //
-// Background:	A counter--just about as simple as they can become.  Useful as
-//		a "Hello world" exercise in formal verification.
+// Background:	
 //
-// To Prove:	That the counter's value stays between 0 and MAX_VALUE-1.
+// #1, To Prove:
+//	1. Assume that once raised, i_start_signal will remain high until it
+//		is both high and the counter is no longer busy.
+//		Following (i_start_signal)&&(!o_busy), i_start_signal is no
+//		longer constrained--until it is raised again.
+//	2. o_busy will *always* be true any time the counter is non-zero.
+//	3. If the counter is non-zero, it should always be counting down
+//
+// #2, To Prove:
+//	1. First, adjust o_busy to be a clocked signal/register
+//	2. Prove that it will only ever be true when the counter is non-zero
 //
 // Creator:	Dan Gisselquist, Ph.D.
 //		Gisselquist Technology, LLC
@@ -40,29 +49,30 @@
 //
 `default_nettype	none
 //
-module	counter(i_clk, i_start_signal, o_busy);
-   parameter	[15:0]	MAX_AMOUNT = 22;
-   //
-   input	wire	i_clk;
-   //
-   input	wire	i_start_signal;
-   output	reg	o_busy;
+module	busyctr(i_clk, i_reset,
+		i_start_signal, o_busy);
+	parameter	[15:0]	MAX_AMOUNT = 22;
+	//
+	input	wire	i_clk, i_reset;
+	//
+	input	wire	i_start_signal;
+	output	reg	o_busy;
 
-   reg [15:0]           counter;
+	reg	[15:0]	counter;
 
-   initial counter = 0;
-   
-   always @(posedge i_clk)
-     if ((i_start_signal)&&(counter == 0))
-       counter <= MAX_AMOUNT-1'b1;
-     else if (counter != 0)
-       counter <= counter - 1'b1;
+	initial	counter = 0;
+	always @(posedge i_clk)
+		if (i_reset)
+			counter <= 0;
+		else if ((i_start_signal)&&(counter == 0))
+			counter <= MAX_AMOUNT-1'b1;
+		else if (counter != 0)
+			counter <= counter - 1'b1;
 
-   always @(*)
-     o_busy <= (counter != 0);
+	always @(*)
+		o_busy <= (counter != 0);
 
 `ifdef	FORMAL
-   always @(*)
-     assert(counter < MAX_AMOUNT);
+	// Your formal properties would go here
 `endif
 endmodule
